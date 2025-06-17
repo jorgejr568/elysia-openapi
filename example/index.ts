@@ -5,7 +5,7 @@ const schema = t.Object({
 	test: t.Literal('hello')
 })
 
-const app = new Elysia()
+const app = new Elysia({ prefix: '/api' })
 	.use(
 		swagger({
 			provider: 'scalar',
