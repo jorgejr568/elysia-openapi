@@ -52,7 +52,7 @@ const app = new Elysia({ prefix: '/api' })
 		}
 	)
 	.post('/json', ({ body }) => body, {
-		parse: 'formdata',
+		parse: ['json', 'formdata'],
 		body: 'schema',
 		response: 'schema'
 	})
