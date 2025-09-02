@@ -2,7 +2,12 @@ import type { OpenAPIV3 } from 'openapi-types'
 import type { ReferenceConfiguration } from '@scalar/types'
 import type { SwaggerUIOptions } from './swagger/types'
 
-export interface ElysiaSwaggerConfig<Path extends string = '/swagger'> {
+export type OpenAPIProvider = 'scalar' | 'swagger-ui' | null
+
+export interface ElysiaOpenAPIConfig<
+	Path extends string = '/swagger',
+	Provider extends OpenAPIProvider = 'scalar'
+> {
 	/**
 	 * Customize Swagger config, refers to Swagger 2.0 config
 	 *
@@ -20,51 +25,38 @@ export interface ElysiaSwaggerConfig<Path extends string = '/swagger'> {
 	 * @see https://github.com/scalar/scalar
 	 * @see https://github.com/swagger-api/swagger-ui
 	 */
-	provider?: 'scalar' | 'swagger-ui'
-	/**
-	 * Version to use for Scalar cdn bundle
-	 *
-	 * @default 'latest'
-	 * @see https://github.com/scalar/scalar
-	 */
-	scalarVersion?: string
-	/**
-	 * Optional override to specifying the path for the Scalar bundle
-	 *
-	 * Custom URL or path to locally hosted Scalar bundle
-	 *
-	 * Lease blank to use default jsdeliver.net CDN
-	 *
-	 * @default ''
-	 * @example 'https://unpkg.com/@scalar/api-reference@1.13.10/dist/browser/standalone.js'
-	 * @example '/public/standalone.js'
-	 * @see https://github.com/scalar/scalar
-	 */
-	scalarCDN?: string
+	provider?: OpenAPIProvider
 	/**
 	 * Scalar configuration to customize scalar
 	 *'
 	 * @see https://github.com/scalar/scalar/blob/main/documentation/configuration.md
 	 */
-	scalarConfig?: ReferenceConfiguration
-	/**
-	 * Version to use for swagger cdn bundle
-	 *
-	 * @see unpkg.com/swagger-ui-dist
-	 *
-	 * @default 4.18.2
-	 */
-	version?: string
-	/**
-	 * Determine if Swagger should exclude static files.
-	 *
-	 * @default true
-	 */
-	excludeStaticFile?: boolean
+	scalar?: ReferenceConfiguration & {
+		/**
+		 * Version to use for Scalar cdn bundle
+		 *
+		 * @default 'latest'
+		 * @see https://github.com/scalar/scalar
+		 */
+		version?: string
+		/**
+		 * Optional override to specifying the path for the Scalar bundle
+		 *
+		 * Custom URL or path to locally hosted Scalar bundle
+		 *
+		 * Lease blank to use default jsdeliver.net CDN
+		 *
+		 * @default ''
+		 * @example 'https://unpkg.com/@scalar/api-reference@1.13.10/dist/browser/standalone.js'
+		 * @example '/public/standalone.js'
+		 * @see https://github.com/scalar/scalar
+		 */
+		cdn?: string
+	}
 	/**
 	 * The endpoint to expose OpenAPI Documentation
 	 *
-	 * @default '/swagger'
+	 * @default '/openapi'
 	 */
 	path?: Path
 	/**
@@ -74,17 +66,11 @@ export interface ElysiaSwaggerConfig<Path extends string = '/swagger'> {
 	 */
 	specPath?: string
 	/**
-	 * Paths to exclude from Swagger endpoint
-	 *
-	 * @default []
-	 */
-	exclude?: string | RegExp | (string | RegExp)[]
-	/**
 	 * Options to send to SwaggerUIBundle
 	 * Currently, options that are defined as functions such as requestInterceptor
 	 * and onComplete are not supported.
 	 */
-	swaggerOptions?: Omit<
+	swagger?: Omit<
 		Partial<SwaggerUIOptions>,
 		| 'dom_id'
 		| 'dom_node'
@@ -100,28 +86,50 @@ export interface ElysiaSwaggerConfig<Path extends string = '/swagger'> {
 		| 'responseInterceptor'
 		| 'modelPropertyMacro'
 		| 'parameterMacro'
-	>
-	/**
-	 * Custom Swagger CSS
-	 */
-	theme?:
-		| string
-		| {
-				light: string
-				dark: string
-		  }
-	/**
-	 * Using poor man dark mode 😭
-	 */
-	autoDarkMode?: boolean
+	> & {
+		/**
+		 * Custom Swagger CSS
+		 */
+		theme?:
+			| string
+			| {
+					light: string
+					dark: string
+			  }
+		/**
+		 * Version to use for swagger cdn bundle
+		 *
+		 * @see unpkg.com/swagger-ui-dist
+		 *
+		 * @default 4.18.2
+		 */
+		version?: string
+		/**
+		 * Using poor man dark mode 😭
+		 */
+		autoDarkMode?: boolean
+	}
 
-	/**
-	 * Exclude methods from Swagger
-	 */
-	excludeMethods?: string[]
-
-	/**
-	 * Exclude tags from Swagger or Scalar
-	 */
-	excludeTags?: string[]
+	exclude?: {
+		/**
+		 * Paths to exclude from OpenAPI endpoint
+		 *
+		 * @default []
+		 */
+		paths?: string | RegExp | (string | RegExp)[]
+		/**
+		 * Exclude methods from OpenAPI
+		 */
+		methods?: string[]
+		/**
+		 * Exclude tags from OpenAPI
+		 */
+		tags?: string[]
+		/**
+		 * Determine if OpenAPI should exclude static files.
+		 *
+		 * @default true
+		 */
+		staticFile?: boolean
+	}
 }

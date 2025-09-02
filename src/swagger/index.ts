@@ -28,7 +28,7 @@ function transformDateProperties(schema: SchemaObject): SchemaObject {
     Object.entries(newSchema).forEach(([key, value]) => {
         if (isSchemaObject(value)) {
             if (isDateTimeProperty(key, value)) {
-                const dateTimeFormat = value.anyOf?.find((item): item is OpenAPIV3.SchemaObject => 
+                const dateTimeFormat = value.anyOf?.find((item): item is OpenAPIV3.SchemaObject =>
                     isSchemaObject(item) && item.format === 'date-time'
                 );
                 if (dateTimeFormat) {

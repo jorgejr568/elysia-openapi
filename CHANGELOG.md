@@ -1,4 +1,15 @@
-# 1.3.1
+# 1.3.2 - 22 Aug 2025
+Feature:
+- add `withHeader` for adding custom headers to response schema
+- spread all possible path for optional params
+
+Breaking change:
+- rename `@elysiajs/swagger` to `@elysiajs/openapi`
+- map all `swagger`, and `scalar` prefix to respective `swagger` and `scalar` properties
+- rename `swaggerConfig`, and `scalarConfig` to `swagger` and `scalar` respectively
+- map `excludePaths`, `excludeMethods`, `excludeTags`, `excludeStaticFiles`	 to property of `excludes`
+
+# 1.3.1 - 28 Jun 2025
 Bug fix:
 - Using relative path for specPath
 
