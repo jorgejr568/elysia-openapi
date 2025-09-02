@@ -2,7 +2,7 @@ import { t, type AnyElysia, type TSchema, type InputSchema } from 'elysia'
 import type { HookContainer } from 'elysia/types'
 
 import type { OpenAPIV3 } from 'openapi-types'
-import type { TProperties } from '@sinclair/typebox'
+import { Kind, type TProperties } from '@sinclair/typebox'
 
 import type {
 	AdditionalReference,
@@ -52,6 +52,13 @@ export const getPossiblePath = (path: string): string[] => {
 
 	return paths
 }
+
+const isValidSchema = (schema: any): schema is TSchema =>
+	typeof schema === 'object' &&
+	((Kind in schema && schema[Kind] !== 'Unknown') ||
+		schema.type ||
+		schema.properties ||
+		schema.items)
 
 /**
  * Converts Elysia routes to OpenAPI 3.0.3 paths schema
@@ -111,21 +118,33 @@ export function toOpenAPISchema(
 				const refer = reference[route.path]?.[method]
 				if (!refer) continue
 
-				if (!hooks.body && refer.body?.type) hooks.body = refer.body
-				if (!hooks.query && refer.query?.type) hooks.query = refer.query
-				if (!hooks.params && refer.params?.type)
-					hooks.params = refer.params
-				if (!hooks.headers && refer.headers?.type)
-					hooks.headers = refer.headers
-				if (!hooks.response && refer.response) {
-					hooks.response = {}
+				if (!hooks.body && isValidSchema(refer.body))
+					hooks.body = refer.body
 
+				if (!hooks.query && isValidSchema(refer.query))
+					hooks.query = refer.query
+
+				if (!hooks.params && isValidSchema(refer.params))
+					hooks.params = refer.params
+
+				if (!hooks.headers && isValidSchema(refer.headers))
+					hooks.headers = refer.headers
+
+				if (refer.response)
 					for (const [status, schema] of Object.entries(
 						refer.response
 					))
-						if (!hooks.response[status as any] && schema?.type)
-							hooks.response[status as any] = schema
-				}
+						if (isValidSchema(schema)) {
+							if (!hooks.response) hooks.response = {}
+
+							if (
+								!hooks.response[
+									status as keyof (typeof hooks)['response']
+								]
+							)
+								// @ts-ignore
+								hooks.response[status] = schema
+						}
 			}
 
 		if (

@@ -1,3 +1,8 @@
+# 1.3.5 - 3 Sep 2025
+Bug fix:
+- type generator: merge references with existing response status
+- type generator: handle union type
+
 # 1.3.4 - 3 Sep 2025
 Bug fix:
 - type generator: exclude unknown type

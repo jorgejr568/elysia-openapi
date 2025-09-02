@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia'
-import { openapi } from '../src/index'
+import { openapi, withHeaders } from '../src/index'
 import { fromTypes } from '../src/gen'
 
 export const app = new Elysia()
@@ -8,7 +8,26 @@ export const app = new Elysia()
 			references: fromTypes('example/gen.ts')
 		})
 	)
-	.get('/', { test: 'hello' as const })
+	.get(
+		'/',
+		() =>
+			({ test: 'hello' as const }) as any as
+				| { test: 'hello' }
+				| undefined,
+		{
+			response: {
+				204: withHeaders(
+					t.Void({
+						title: 'Thing',
+						description: 'Void response'
+					}),
+					{
+						'X-Custom-Header': t.Literal('Elysia')
+					}
+				)
+			}
+		}
+	)
 	.post(
 		'/json',
 		({ body, status }) => (Math.random() > 0.5 ? status(418) : body),
