@@ -104,10 +104,11 @@ export const fromTypes =
 				"lib": ["ESNext"],
 				"module": "ESNext",
 				"noEmit": false,
+				"declaration": true,
+				"emitDeclarationOnly": true,
 				"moduleResolution": "bundler",
 				"skipLibCheck": true,
 				"skipDefaultLibCheck": true,
-				"emitDeclarationOnly": true,
 				"outDir": "./dist"
 			},
 			"include": ["${join(projectRoot, targetFilePath)}"]
