@@ -15,7 +15,7 @@ const user = t.Object({
 	})
 })
 
-const app = new Elysia()
+export const app = new Elysia()
 	.use(
 		openapi({
 			provider: 'scalar',
@@ -81,5 +81,5 @@ const app = new Elysia()
 			}
 		}
 	)
-	.get('/id/:id?/name/:name?', () => {})
+	.get('/id/:id/name/:name', () => {})
 	.listen(3000)

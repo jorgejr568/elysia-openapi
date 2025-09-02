@@ -81,6 +81,7 @@
         "typescript": "^5.9.2"
     },
     "dependencies": {
+        "@sinclair/typemap": "^0.10.1",
         "openapi-types": "^12.1.3"
     }
 }

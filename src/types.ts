@@ -1,8 +1,27 @@
+import type { TSchema } from 'elysia'
 import type { OpenAPIV3 } from 'openapi-types'
 import type { ApiReferenceConfiguration } from '@scalar/types'
 import type { SwaggerUIOptions } from './swagger/types'
 
 export type OpenAPIProvider = 'scalar' | 'swagger-ui' | null
+
+type MaybeArray<T> = T | T[]
+
+export type AdditionalReference = {
+	[path in string]: {
+		[method in string]: {
+			params: TSchema
+			query: TSchema
+			headers: TSchema
+			body: TSchema
+			response: { [status in number]: TSchema }
+		}
+	}
+}
+
+export type AdditionalReferences = MaybeArray<
+	AdditionalReference | undefined | (() => AdditionalReference | undefined)
+>
 
 export interface ElysiaOpenAPIConfig<
 	Enabled extends boolean = true,
@@ -146,4 +165,6 @@ export interface ElysiaOpenAPIConfig<
 		 */
 		staticFile?: boolean
 	}
+
+	references?: AdditionalReferences
 }

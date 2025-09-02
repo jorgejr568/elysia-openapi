@@ -4,7 +4,11 @@ import type { HookContainer } from 'elysia/types'
 import type { OpenAPIV3 } from 'openapi-types'
 import type { TProperties } from '@sinclair/typebox'
 
-import type { ElysiaOpenAPIConfig } from './types'
+import type {
+	AdditionalReference,
+	AdditionalReferences,
+	ElysiaOpenAPIConfig
+} from './types'
 
 export const capitalize = (word: string) =>
 	word.charAt(0).toUpperCase() + word.slice(1)
@@ -37,7 +41,7 @@ export const getPossiblePath = (path: string): string[] => {
 	const optionalParams = path.match(optionalParamsRegex)
 	if (!optionalParams) return [path]
 
-	const originalPath = path.replaceAll('?', '')
+	const originalPath = path.replace(/\?/g, '')
 	const paths = [originalPath]
 
 	for (let i = 0; i < optionalParams.length; i++) {
@@ -56,7 +60,8 @@ export const getPossiblePath = (path: string): string[] => {
  */
 export function toOpenAPISchema(
 	app: AnyElysia,
-	exclude?: ElysiaOpenAPIConfig['exclude']
+	exclude?: ElysiaOpenAPIConfig['exclude'],
+	references?: AdditionalReferences
 ) {
 	const {
 		methods: excludeMethods = ['OPTIONS'],
@@ -75,6 +80,16 @@ export function toOpenAPISchema(
 	// @ts-ignore private property
 	const routes = app.getGlobalRoutes()
 
+	if (references) {
+		if (!Array.isArray(references)) references = [references]
+
+		for (let i = 0; i < references.length; i++) {
+			const reference = references[i]
+
+			if (typeof reference === 'function') references[i] = reference()
+		}
+	}
+
 	for (const route of routes) {
 		if (route.hooks?.detail?.hide) continue
 
@@ -86,6 +101,27 @@ export function toOpenAPISchema(
 		const hooks: InputSchema & {
 			detail: Partial<OpenAPIV3.OperationObject>
 		} = route.hooks ?? {}
+
+		if (references)
+			for (const reference of references as AdditionalReference[]) {
+				const refer = reference[route.path]?.[method]
+				if (!refer) continue
+
+				if (!hooks.body && refer.body) hooks.body = refer.body
+				if (!hooks.query && refer.query) hooks.query = refer.query
+				if (!hooks.params && refer.params) hooks.params = refer.params
+				if (!hooks.headers && refer.headers)
+					hooks.headers = refer.headers
+				if (!hooks.response && refer.response) {
+					hooks.response = {}
+
+					for (const [status, schema] of Object.entries(
+						refer.response
+					))
+						if (!hooks.response[status as any])
+							hooks.response[status as any] = schema
+				}
+			}
 
 		if (
 			excludeTags &&
@@ -107,10 +143,6 @@ export function toOpenAPISchema(
 
 		// Handle path parameters
 		if (hooks.params) {
-			// const pathParamNames =
-			// 	route.path.match(/:([^/]+)/g)?.map((param) => param.slice(1)) ||
-			// 	[]
-
 			if (typeof hooks.params === 'string')
 				hooks.params = toRef(hooks.params)
 

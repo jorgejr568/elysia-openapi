@@ -26,7 +26,8 @@ export const openapi = <
 	documentation = {},
 	exclude,
 	swagger,
-	scalar
+	scalar,
+	references
 }: ElysiaOpenAPIConfig<Enabled, Path, Provider> = {}) => {
 	if (!enabled) return new Elysia({ name: '@elysiajs/openapi' })
 
@@ -87,7 +88,7 @@ export const openapi = <
 				const {
 					paths,
 					components: { schemas }
-				} = toOpenAPISchema(app, exclude)
+				} = toOpenAPISchema(app, exclude, references)
 
 				return (cachedSchema = {
 					openapi: '3.0.3',
