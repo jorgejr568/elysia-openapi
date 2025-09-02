@@ -124,13 +124,15 @@ export const fromTypes =
 			let targetFile =
 				overrideOutputPath?.(tmpRoot) ?? join(tmpRoot, 'dist', fileName)
 
-			// Sometime TypeScript doesn't include the first level directory, eg. src/file.ts -> dist/file.d.ts
-			if (!existsSync(targetFile))
-				targetFile = join(
+			{
+				const _targetFile = join(
 					tmpRoot,
 					'dist',
 					fileName.slice(fileName.indexOf('/') + 1)
 				)
+
+				if (existsSync(_targetFile)) targetFile = _targetFile
+			}
 
 			const declaration = readFileSync(targetFile, 'utf8')
 
@@ -200,7 +202,9 @@ export const fromTypes =
 
 			return routes
 		} catch (error) {
-			console.warn('[@elysiajs/openapi/gen] Failed to generate OpenAPI schema')
+			console.warn(
+				'[@elysiajs/openapi/gen] Failed to generate OpenAPI schema'
+			)
 			console.warn(error)
 
 			return

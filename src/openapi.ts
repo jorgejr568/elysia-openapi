@@ -111,10 +111,11 @@ export function toOpenAPISchema(
 				const refer = reference[route.path]?.[method]
 				if (!refer) continue
 
-				if (!hooks.body && refer.body) hooks.body = refer.body
-				if (!hooks.query && refer.query) hooks.query = refer.query
-				if (!hooks.params && refer.params) hooks.params = refer.params
-				if (!hooks.headers && refer.headers)
+				if (!hooks.body && refer.body?.type) hooks.body = refer.body
+				if (!hooks.query && refer.query?.type) hooks.query = refer.query
+				if (!hooks.params && refer.params?.type)
+					hooks.params = refer.params
+				if (!hooks.headers && refer.headers?.type)
 					hooks.headers = refer.headers
 				if (!hooks.response && refer.response) {
 					hooks.response = {}
@@ -122,7 +123,7 @@ export function toOpenAPISchema(
 					for (const [status, schema] of Object.entries(
 						refer.response
 					))
-						if (!hooks.response[status as any])
+						if (!hooks.response[status as any] && schema?.type)
 							hooks.response[status as any] = schema
 				}
 			}
@@ -224,7 +225,7 @@ export function toOpenAPISchema(
 		if (parameters.length > 0) operation.parameters = parameters
 
 		// Handle request body
-		if (hooks.body) {
+		if (hooks.body && method !== 'get' && method !== 'head') {
 			if (typeof hooks.body === 'string') hooks.body = toRef(hooks.body)
 
 			// @ts-ignore

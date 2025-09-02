@@ -1,3 +1,7 @@
+# 1.3.4 - 3 Sep 2025
+Bug fix:
+- type generator: exclude unknown type
+
 # 1.3.3 - 3 Sep 2025
 Bug fix:
 - type generator: collapse path when trying to access from dist
