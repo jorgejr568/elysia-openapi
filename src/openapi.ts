@@ -60,6 +60,13 @@ const isValidSchema = (schema: any): schema is TSchema =>
 		schema.properties ||
 		schema.items)
 
+export const getLoosePath = (path: string) => {
+	if (path.charCodeAt(path.length - 1) === 47)
+		return path.slice(0, path.length - 1)
+
+	return path + '/'
+}
+
 /**
  * Converts Elysia routes to OpenAPI 3.0.3 paths schema
  * @param routes Array of Elysia route objects
@@ -115,7 +122,10 @@ export function toOpenAPISchema(
 
 		if (references)
 			for (const reference of references as AdditionalReference[]) {
-				const refer = reference[route.path]?.[method]
+				const refer =
+					reference[route.path]?.[method] ??
+					reference[getLoosePath(route.path)]?.[method]
+
 				if (!refer) continue
 
 				if (!hooks.body && isValidSchema(refer.body))

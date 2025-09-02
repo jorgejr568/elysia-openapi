@@ -1,3 +1,7 @@
+# 1.3.6 - 3 Sep 2025
+Improvement:
+- type generator: add loose path type matching
+
 # 1.3.5 - 3 Sep 2025
 Bug fix:
 - type generator: merge references with existing response status
