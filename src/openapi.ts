@@ -95,8 +95,12 @@ export function toOpenAPISchema(
 
 		const method = route.method.toLowerCase()
 
-		if (excludePaths.includes(route.path)) continue
-		if (excludeMethods.includes(method)) continue
+		if (
+			(excludeStaticFile && route.path.includes('.')) ||
+			excludePaths.includes(route.path) ||
+			excludeMethods.includes(method)
+		)
+			continue
 
 		const hooks: InputSchema & {
 			detail: Partial<OpenAPIV3.OperationObject>

@@ -179,7 +179,7 @@ export const fromTypes =
 
 				if (!routes[path]) routes[path] = {}
 				// @ts-ignore
-				routes[path][method] = schema
+				routes[path][method.toLowerCase()] = schema
 			}
 
 			return routes

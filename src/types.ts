@@ -34,15 +34,49 @@ export interface ElysiaOpenAPIConfig<
 	enabled?: Enabled
 
 	/**
-	 * Customize Swagger config, refers to Swagger 2.0 config
+	 * OpenAPI config
 	 *
-	 * @see https://swagger.io/specification/v2/
+	 * @see https://spec.openapis.org/oas/v3.0.3.html
 	 */
 	documentation?: Omit<
 		Partial<OpenAPIV3.Document>,
 		| 'x-express-openapi-additional-middleware'
 		| 'x-express-openapi-validation-strict'
 	>
+
+	exclude?: {
+		/**
+		 * Exclude methods from OpenAPI
+		 */
+		methods?: string[]
+
+		/**
+		 * Paths to exclude from OpenAPI endpoint
+		 *
+		 * @default []
+		 */
+		paths?: string | RegExp | (string | RegExp)[]
+
+		/**
+		 * Determine if OpenAPI should exclude static files.
+		 *
+		 * @default true
+		 */
+		staticFile?: boolean
+
+		/**
+		 * Exclude tags from OpenAPI
+		 */
+		tags?: string[]
+	}
+
+	/**
+	 * The endpoint to expose OpenAPI Documentation
+	 *
+	 * @default '/openapi'
+	 */
+	path?: Path
+
 	/**
 	 * Choose your provider, Scalar or Swagger UI
 	 *
@@ -51,6 +85,12 @@ export interface ElysiaOpenAPIConfig<
 	 * @see https://github.com/swagger-api/swagger-ui
 	 */
 	provider?: Provider
+
+	/**
+	 * Additional reference for each endpoint
+	 */
+	references?: AdditionalReferences
+
 	/**
 	 * Scalar configuration to customize scalar
 	 *'
@@ -79,17 +119,12 @@ export interface ElysiaOpenAPIConfig<
 		cdn?: string
 	}
 	/**
-	 * The endpoint to expose OpenAPI Documentation
-	 *
-	 * @default '/openapi'
-	 */
-	path?: Path
-	/**
 	 * The endpoint to expose OpenAPI JSON specification
 	 *
 	 * @default '/${path}/json'
 	 */
 	specPath?: string
+
 	/**
 	 * Options to send to SwaggerUIBundle
 	 * Currently, options that are defined as functions such as requestInterceptor
@@ -142,29 +177,4 @@ export interface ElysiaOpenAPIConfig<
 		 */
 		cdn?: string
 	}
-
-	exclude?: {
-		/**
-		 * Paths to exclude from OpenAPI endpoint
-		 *
-		 * @default []
-		 */
-		paths?: string | RegExp | (string | RegExp)[]
-		/**
-		 * Exclude methods from OpenAPI
-		 */
-		methods?: string[]
-		/**
-		 * Exclude tags from OpenAPI
-		 */
-		tags?: string[]
-		/**
-		 * Determine if OpenAPI should exclude static files.
-		 *
-		 * @default true
-		 */
-		staticFile?: boolean
-	}
-
-	references?: AdditionalReferences
 }
