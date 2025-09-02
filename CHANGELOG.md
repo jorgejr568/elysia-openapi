@@ -1,6 +1,7 @@
-# 1.3.7
+# 1.3.7 - 3 Sep 2025
 Improvement:
 - type generator: clean up temp files after generation
+- type generator: imbalance bracket or something
 
 # 1.3.6 - 3 Sep 2025
 Improvement:

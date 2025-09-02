@@ -17,7 +17,7 @@ import { AdditionalReference, AdditionalReferences } from '../types'
 import { Kind, TObject } from '@sinclair/typebox/type'
 
 const matchRoute = /: Elysia<(.*)>/gs
-const matchStatus = /(\d{3}):/gs
+const matchStatus = /(\d{3}):/g
 const wrapStatusInQuote = (value: string) => value.replace(matchStatus, '"$1":')
 
 const exec = (command: string, cwd: string) =>
@@ -156,13 +156,19 @@ export const fromTypes =
 			//         1   2   3   4   5
 			// We want the 4th one
 			for (let i = 0; i < 3; i++)
-				instance = instance.slice(instance.indexOf('}, {', 3))
+				instance = instance.slice(
+					instance.indexOf(
+						'}, {',
+						// remove just `}, `, leaving `{`
+						3
+					)
+				)
 
-			const routesString =
-				wrapStatusInQuote(instance).slice(
-					3,
-					instance.indexOf('}, {', 3)
-				) + '}\n}\n'
+			const routesString = wrapStatusInQuote(
+				// Intentionally not adding "}"
+				// to avoid mismatched bracket in loop below
+				instance.slice(3, instance.indexOf('}, {', 4))
+			)
 
 			const routes: AdditionalReference = {}
 
@@ -171,13 +177,8 @@ export const fromTypes =
 			// instead of being nested in a route object
 			for (const route of routesString.slice(1).split('} & {')) {
 				// as '} & {' is removed, we need to add it back
-				let schema = TypeBox(`{${route}}}`)
-				if (schema.type !== 'object') {
-					// just in case
-					schema = TypeBox(`{${route}}`)
-
-					if (schema.type !== 'object') continue
-				}
+				let schema = TypeBox(`{${route}}`)
+				if (schema.type !== 'object') continue
 
 				const paths = []
 
