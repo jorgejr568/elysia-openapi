@@ -1,11 +1,7 @@
-if ('Bun' in globalThis) {
-  throw new Error('❌ Use Node.js to run this test!');
-}
+if ('Bun' in globalThis) throw new Error('❌ Use Node.js to run this test!')
 
-const { swagger } = require('@elysiajs/swagger');
+const { openapi } = require('@elysiajs/openapi')
 
-if (typeof swagger !== 'function') {
-  throw new Error('❌ CommonJS Node.js failed');
-}
+if (typeof openapi !== 'function') throw new Error('❌ CommonJS Node.js failed')
 
-console.log('✅ CommonJS Node.js works!');
+console.log('✅ CommonJS Node.js works!')

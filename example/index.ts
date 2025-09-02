@@ -1,18 +1,28 @@
 import { Elysia, t } from 'elysia'
-import { swagger } from '../src/index'
+import { openapi, withHeaders } from '../src/index'
 
 const schema = t.Object({
 	test: t.Literal('hello')
 })
 
-const app = new Elysia({ prefix: '/api' })
+const schema2 = t.Object({
+	test: t.Literal('world')
+})
+
+const user = t.Object({
+	name: t.String({
+		example: 'saltyaom'
+	})
+})
+
+export const app = new Elysia()
 	.use(
-		swagger({
+		openapi({
 			provider: 'scalar',
 			documentation: {
 				info: {
 					title: 'Elysia Scalar',
-					version: '0.8.1'
+					version: '1.3.1a'
 				},
 				tags: [
 					{
@@ -21,39 +31,55 @@ const app = new Elysia({ prefix: '/api' })
 					}
 				],
 				components: {
-					schemas: {
-						User: {
-							description: 'string'
-						}
-					},
 					securitySchemes: {
-						JwtAuth: {
+						bearer: {
 							type: 'http',
-							scheme: 'bearer',
-							bearerFormat: 'JWT',
-							description: 'Enter JWT Bearer token **_only_**'
+							scheme: 'bearer'
+						},
+						cookie: {
+							type: 'apiKey',
+							in: 'cookie',
+							name: 'session_id'
 						}
 					}
 				}
-			},
-			swaggerOptions: {
-				persistAuthorization: true
 			}
 		})
 	)
-	.model({ schema })
+	.model({ schema, schema2, user })
 	.get(
 		'/',
-		() => {
-			return { test: 'hello' as const }
-		},
+		{ test: 'hello' as const },
 		{
-			response: 'schema'
+			response: {
+				200: t.Object({
+					test: t.Literal('hello')
+				}),
+				204: withHeaders(
+					t.Void({
+						title: 'Thing',
+						description: 'Void response'
+					}),
+					{
+						'X-Custom-Header': t.Literal('Elysia')
+					}
+				)
+			}
 		}
 	)
-	.post('/json', ({ body }) => body, {
-		parse: ['json', 'formdata'],
-		body: 'schema',
-		response: 'schema'
-	})
+	.post(
+		'/json',
+		({ body }) => ({
+			test: 'world'
+		}),
+		{
+			parse: ['json', 'formdata'],
+			body: 'user',
+			response: {
+				200: 'schema',
+				400: 'schema2'
+			}
+		}
+	)
+	.get('/id/:id/name/:name', () => {})
 	.listen(3000)

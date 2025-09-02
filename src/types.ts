@@ -1,18 +1,82 @@
+import type { TSchema } from 'elysia'
 import type { OpenAPIV3 } from 'openapi-types'
-import type { ReferenceConfiguration } from '@scalar/types'
+import type { ApiReferenceConfiguration } from '@scalar/types'
 import type { SwaggerUIOptions } from './swagger/types'
 
-export interface ElysiaSwaggerConfig<Path extends string = '/swagger'> {
+export type OpenAPIProvider = 'scalar' | 'swagger-ui' | null
+
+type MaybeArray<T> = T | T[]
+
+export type AdditionalReference = {
+	[path in string]: {
+		[method in string]: {
+			params: TSchema
+			query: TSchema
+			headers: TSchema
+			body: TSchema
+			response: { [status in number]: TSchema }
+		}
+	}
+}
+
+export type AdditionalReferences = MaybeArray<
+	AdditionalReference | undefined | (() => AdditionalReference | undefined)
+>
+
+export interface ElysiaOpenAPIConfig<
+	Enabled extends boolean = true,
+	Path extends string = '/swagger',
+	Provider extends OpenAPIProvider = 'scalar'
+> {
 	/**
-	 * Customize Swagger config, refers to Swagger 2.0 config
+	 * @default true
+	 */
+	enabled?: Enabled
+
+	/**
+	 * OpenAPI config
 	 *
-	 * @see https://swagger.io/specification/v2/
+	 * @see https://spec.openapis.org/oas/v3.0.3.html
 	 */
 	documentation?: Omit<
 		Partial<OpenAPIV3.Document>,
 		| 'x-express-openapi-additional-middleware'
 		| 'x-express-openapi-validation-strict'
 	>
+
+	exclude?: {
+		/**
+		 * Exclude methods from OpenAPI
+		 */
+		methods?: string[]
+
+		/**
+		 * Paths to exclude from OpenAPI endpoint
+		 *
+		 * @default []
+		 */
+		paths?: string | RegExp | (string | RegExp)[]
+
+		/**
+		 * Determine if OpenAPI should exclude static files.
+		 *
+		 * @default true
+		 */
+		staticFile?: boolean
+
+		/**
+		 * Exclude tags from OpenAPI
+		 */
+		tags?: string[]
+	}
+
+	/**
+	 * The endpoint to expose OpenAPI Documentation
+	 *
+	 * @default '/openapi'
+	 */
+	path?: Path
+
 	/**
 	 * Choose your provider, Scalar or Swagger UI
 	 *
@@ -20,71 +84,53 @@ export interface ElysiaSwaggerConfig<Path extends string = '/swagger'> {
 	 * @see https://github.com/scalar/scalar
 	 * @see https://github.com/swagger-api/swagger-ui
 	 */
-	provider?: 'scalar' | 'swagger-ui'
+	provider?: Provider
+
 	/**
-	 * Version to use for Scalar cdn bundle
-	 *
-	 * @default 'latest'
-	 * @see https://github.com/scalar/scalar
+	 * Additional reference for each endpoint
 	 */
-	scalarVersion?: string
-	/**
-	 * Optional override to specifying the path for the Scalar bundle
-	 *
-	 * Custom URL or path to locally hosted Scalar bundle
-	 *
-	 * Lease blank to use default jsdeliver.net CDN
-	 *
-	 * @default ''
-	 * @example 'https://unpkg.com/@scalar/api-reference@1.13.10/dist/browser/standalone.js'
-	 * @example '/public/standalone.js'
-	 * @see https://github.com/scalar/scalar
-	 */
-	scalarCDN?: string
+	references?: AdditionalReferences
+
 	/**
 	 * Scalar configuration to customize scalar
 	 *'
 	 * @see https://github.com/scalar/scalar/blob/main/documentation/configuration.md
 	 */
-	scalarConfig?: ReferenceConfiguration
-	/**
-	 * Version to use for swagger cdn bundle
-	 *
-	 * @see unpkg.com/swagger-ui-dist
-	 *
-	 * @default 4.18.2
-	 */
-	version?: string
-	/**
-	 * Determine if Swagger should exclude static files.
-	 *
-	 * @default true
-	 */
-	excludeStaticFile?: boolean
-	/**
-	 * The endpoint to expose OpenAPI Documentation
-	 *
-	 * @default '/swagger'
-	 */
-	path?: Path
+	scalar?: ApiReferenceConfiguration & {
+		/**
+		 * Version to use for Scalar cdn bundle
+		 *
+		 * @default 'latest'
+		 * @see https://github.com/scalar/scalar
+		 */
+		version?: string
+		/**
+		 * Optional override to specifying the path for the Scalar bundle
+		 *
+		 * Custom URL or path to locally hosted Scalar bundle
+		 *
+		 * Lease blank to use default jsdeliver.net CDN
+		 *
+		 * @default ''
+		 * @example 'https://unpkg.com/@scalar/api-reference@1.13.10/dist/browser/standalone.js'
+		 * @example '/public/standalone.js'
+		 * @see https://github.com/scalar/scalar
+		 */
+		cdn?: string
+	}
 	/**
 	 * The endpoint to expose OpenAPI JSON specification
 	 *
 	 * @default '/${path}/json'
 	 */
 	specPath?: string
-	/**
-	 * Paths to exclude from Swagger endpoint
-	 *
-	 * @default []
-	 */
-	exclude?: string | RegExp | (string | RegExp)[]
+
 	/**
 	 * Options to send to SwaggerUIBundle
 	 * Currently, options that are defined as functions such as requestInterceptor
 	 * and onComplete are not supported.
 	 */
-	swaggerOptions?: Omit<
+	swagger?: Omit<
 		Partial<SwaggerUIOptions>,
 		| 'dom_id'
 		| 'dom_node'
@@ -100,28 +146,35 @@ export interface ElysiaSwaggerConfig<Path extends string = '/swagger'> {
 		| 'responseInterceptor'
 		| 'modelPropertyMacro'
 		| 'parameterMacro'
-	>
-	/**
-	 * Custom Swagger CSS
-	 */
-	theme?:
-		| string
-		| {
-				light: string
-				dark: string
-		  }
-	/**
-	 * Using poor man dark mode 😭
-	 */
-	autoDarkMode?: boolean
+	> & {
+		/**
+		 * Custom Swagger CSS
+		 */
+		theme?:
+			| string
+			| {
+					light: string
+					dark: string
+			  }
 
-	/**
-	 * Exclude methods from Swagger
-	 */
-	excludeMethods?: string[]
+		/**
+		 * Version to use for swagger cdn bundle
+		 *
+		 * @see unpkg.com/swagger-ui-dist
+		 *
+		 * @default 4.18.2
+		 */
+		version?: string
 
-	/**
-	 * Exclude tags from Swagger or Scalar
-	 */
-	excludeTags?: string[]
+		/**
+		 * Using poor man dark mode 😭
+		 */
+		autoDarkMode?: boolean
+
+		/**
+		 * Optional override to specifying the path for the Swagger UI bundle
+		 * Custom URL or path to locally hosted Swagger UI bundle
+		 */
+		cdn?: string
+	}
 }
