@@ -96,8 +96,7 @@ export function toOpenAPISchema(
 
 		// Start building the operation object
 		const operation: Partial<OpenAPIV3.OperationObject> = {
-			...hooks.detail,
-			operationId: toOperationId(route.method, route.path)
+			...hooks.detail
 		}
 
 		const parameters: Array<{
@@ -295,6 +294,8 @@ export function toOpenAPISchema(
 		}
 
 		for (let path of getPossiblePath(route.path)) {
+			const operationId = toOperationId(route.method, route.path)
+
 			path = path.replace(/:([^/]+)/g, '{$1}')
 
 			if (!paths[path]) paths[path] = {}
@@ -302,19 +303,19 @@ export function toOpenAPISchema(
 			const current = paths[path] as any
 
 			if (method !== 'all') {
-				current[method] = operation
+				current[method] = {
+					...operation,
+					operationId
+				}
 				continue
 			}
 
 			// Handle 'ALL' method by assigning operation to all standard methods
-			current.get = operation
-			current.post = operation
-			current.put = operation
-			current.delete = operation
-			current.patch = operation
-			current.head = operation
-			current.options = operation
-			current.trace = operation
+			for(const method of ['get', 'post', 'put', 'delete', 'patch', 'head', 'options', 'trace'])
+			current[method] = {
+				...operation,
+				operationId
+			}
 		}
 	}
 
