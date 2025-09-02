@@ -28,14 +28,14 @@ export const app = new Elysia()
 			}
 		}
 	)
-	.post(
-		'/json',
-		({ body, status }) => (Math.random() > 0.5 ? status(418) : body),
-		{
-			body: t.Object({
-				hello: t.String()
-			})
-		}
-	)
-	.get('/id/:id/name/:name', ({ params }) => params)
+	// .post(
+	// 	'/json',
+	// 	({ body, status }) => (Math.random() > 0.5 ? status(418) : body),
+	// 	{
+	// 		body: t.Object({
+	// 			hello: t.String()
+	// 		})
+	// 	}
+	// )
+	// .get('/id/:id/name/:name', ({ params }) => params)
 	.listen(3000)

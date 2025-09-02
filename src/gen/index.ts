@@ -1,4 +1,4 @@
-import type { InternalRoute } from 'elysia'
+import type { InputSchema, InternalRoute, TSchema } from 'elysia'
 import {
 	readFileSync,
 	mkdirSync,
@@ -14,6 +14,7 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import { spawnSync } from 'child_process'
 import { AdditionalReference, AdditionalReferences } from '../types'
+import { Kind, TObject } from '@sinclair/typebox/type'
 
 const matchRoute = /: Elysia<(.*)>/gs
 const matchStatus = /(\d{3}):/gs
@@ -165,17 +166,24 @@ export const fromTypes =
 
 			const routes: AdditionalReference = {}
 
-			for (let route of routesString.slice(1).split('} & {')) {
-				route = '{' + route + '}'
-				let schema = TypeBox(route)
+			// Treaty is a collection of { ... } & { ... } & { ... }
+			// Each route will be intersected with each other
+			// instead of being nested in a route object
+			for (const route of routesString.slice(1).split('} & {')) {
+				// as '} & {' is removed, we need to add it back
+				let schema = TypeBox(`{${route}}}`)
+				if (schema.type !== 'object') {
+					// just in case
+					schema = TypeBox(`{${route}}`)
 
-				if (schema.type !== 'object') continue
+					if (schema.type !== 'object') continue
+				}
 
 				const paths = []
 
 				while (true) {
 					const keys = Object.keys(schema.properties)
-					if (!keys.length || keys.length > 1) break
+					if (keys.length !== 1) break
 
 					paths.push(keys[0])
 
