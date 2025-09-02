@@ -1,3 +1,7 @@
+# 1.3.3 - 3 Sep 2025
+Bug fix:
+- type generator: collapse path when trying to access from dist
+
 # 1.3.2 - 2 Sep 2025
 Feature:
 - add `withHeader` for adding custom headers to response schema

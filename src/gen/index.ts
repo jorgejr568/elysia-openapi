@@ -5,7 +5,8 @@ import {
 	writeFileSync,
 	rmSync,
 	existsSync,
-	cpSync
+	cpSync,
+	exists
 } from 'fs'
 import { TypeBox } from '@sinclair/typemap'
 
@@ -46,6 +47,14 @@ interface OpenAPIGeneratorOptions {
 	 * @default process.cwd()
 	 */
 	projectRoot?: string
+
+	/**
+	 * Override output path
+	 *
+	 * Under any circumstance, that Elysia failed to find a correct schema,
+	 * Put your own schema in this path
+	 */
+	overrideOutputPath?(tempDir: string): string
 }
 
 /**
@@ -66,7 +75,8 @@ export const fromTypes =
 		{
 			tsconfigPath = 'tsconfig.json',
 			instanceName,
-			projectRoot = process.cwd()
+			projectRoot = process.cwd(),
+			overrideOutputPath
 		}: OpenAPIGeneratorOptions = {}
 	) =>
 	() => {
@@ -107,16 +117,22 @@ export const fromTypes =
 		exec(`tsc`, tmpRoot)
 
 		try {
-			const declaration = readFileSync(
-				join(
+			const fileName = targetFilePath
+				.replace(/.tsx$/, '.ts')
+				.replace(/.ts$/, '.d.ts')
+
+			let targetFile =
+				overrideOutputPath?.(tmpRoot) ?? join(tmpRoot, 'dist', fileName)
+
+			// Sometime TypeScript doesn't include the first level directory, eg. src/file.ts -> dist/file.d.ts
+			if (!existsSync(targetFile))
+				targetFile = join(
 					tmpRoot,
 					'dist',
-					targetFilePath
-						.replace(/.tsx$/, '.ts')
-						.replace(/.ts$/, '.d.ts')
-				),
-				'utf8'
-			)
+					fileName.slice(fileName.indexOf('/') + 1)
+				)
+
+			const declaration = readFileSync(targetFile, 'utf8')
 
 			// Check just in case of race-condition
 			if (existsSync(tmpRoot))
@@ -184,7 +200,7 @@ export const fromTypes =
 
 			return routes
 		} catch (error) {
-			console.warn('Failed to generate OpenAPI schema')
+			console.warn('[@elysiajs/openapi/gen] Failed to generate OpenAPI schema')
 			console.warn(error)
 
 			return
