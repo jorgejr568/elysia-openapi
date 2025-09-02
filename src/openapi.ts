@@ -17,10 +17,9 @@ const toOperationId = (method: string, paths: string) => {
 	if (!paths || paths === '/') return operationId + 'Index'
 
 	for (const path of paths.split('/'))
-		operationId +=
-			path.charCodeAt(0) === 123
-				? 'By' + capitalize(path.slice(1, -1))
-				: capitalize(path)
+		operationId += path.includes(':')
+			? 'By' + capitalize(path.replace(':', ''))
+			: capitalize(path)
 
 	operationId = operationId.replace(/\?/g, 'Optional')
 
@@ -71,7 +70,7 @@ export function toOpenAPISchema(
 			? [exclude.paths]
 			: []
 
-	const paths: OpenAPIV3.PathsObject = {}
+	const paths: OpenAPIV3.PathsObject = Object.create(null)
 
 	// @ts-ignore private property
 	const routes = app.getGlobalRoutes()
@@ -260,7 +259,8 @@ export function toOpenAPISchema(
 				for (let [status, schema] of Object.entries(hooks.response)) {
 					if (typeof schema === 'string') schema = toRef(schema)
 
-					const { type, examples, ...options } = schema
+					// Must exclude $ref from root options
+					const { type, examples, $ref, ...options } = schema
 
 					operation.responses[status] = {
 						description: `Response for status ${status}`,
@@ -294,7 +294,7 @@ export function toOpenAPISchema(
 		}
 
 		for (let path of getPossiblePath(route.path)) {
-			const operationId = toOperationId(route.method, route.path)
+			const operationId = toOperationId(route.method, path)
 
 			path = path.replace(/:([^/]+)/g, '{$1}')
 
@@ -311,11 +311,20 @@ export function toOpenAPISchema(
 			}
 
 			// Handle 'ALL' method by assigning operation to all standard methods
-			for(const method of ['get', 'post', 'put', 'delete', 'patch', 'head', 'options', 'trace'])
-			current[method] = {
-				...operation,
-				operationId
-			}
+			for (const method of [
+				'get',
+				'post',
+				'put',
+				'delete',
+				'patch',
+				'head',
+				'options',
+				'trace'
+			])
+				current[method] = {
+					...operation,
+					operationId
+				}
 		}
 	}
 

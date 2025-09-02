@@ -1,13 +1,19 @@
 import type { OpenAPIV3 } from 'openapi-types'
-import type { ReferenceConfiguration } from '@scalar/types'
+import type { ApiReferenceConfiguration } from '@scalar/types'
 import type { SwaggerUIOptions } from './swagger/types'
 
 export type OpenAPIProvider = 'scalar' | 'swagger-ui' | null
 
 export interface ElysiaOpenAPIConfig<
+	Enabled extends boolean = true,
 	Path extends string = '/swagger',
 	Provider extends OpenAPIProvider = 'scalar'
 > {
+	/**
+	 * @default true
+	 */
+	enabled?: Enabled
+
 	/**
 	 * Customize Swagger config, refers to Swagger 2.0 config
 	 *
@@ -25,13 +31,13 @@ export interface ElysiaOpenAPIConfig<
 	 * @see https://github.com/scalar/scalar
 	 * @see https://github.com/swagger-api/swagger-ui
 	 */
-	provider?: OpenAPIProvider
+	provider?: Provider
 	/**
 	 * Scalar configuration to customize scalar
 	 *'
 	 * @see https://github.com/scalar/scalar/blob/main/documentation/configuration.md
 	 */
-	scalar?: ReferenceConfiguration & {
+	scalar?: ApiReferenceConfiguration & {
 		/**
 		 * Version to use for Scalar cdn bundle
 		 *
@@ -96,6 +102,7 @@ export interface ElysiaOpenAPIConfig<
 					light: string
 					dark: string
 			  }
+
 		/**
 		 * Version to use for swagger cdn bundle
 		 *
@@ -104,10 +111,17 @@ export interface ElysiaOpenAPIConfig<
 		 * @default 4.18.2
 		 */
 		version?: string
+
 		/**
 		 * Using poor man dark mode 😭
 		 */
 		autoDarkMode?: boolean
+
+		/**
+		 * Optional override to specifying the path for the Swagger UI bundle
+		 * Custom URL or path to locally hosted Swagger UI bundle
+		 */
+		cdn?: string
 	}
 
 	exclude?: {

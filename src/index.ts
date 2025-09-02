@@ -6,38 +6,29 @@ import { ScalarRender } from './scalar'
 import { toOpenAPISchema } from './openapi'
 
 import type { OpenAPIV3 } from 'openapi-types'
-import type { ReferenceConfiguration } from '@scalar/types'
+import type { ApiReferenceConfiguration } from '@scalar/types'
 import type { ElysiaOpenAPIConfig, OpenAPIProvider } from './types'
 
 /**
- * Plugin for [elysia](https://github.com/elysiajs/elysia) that auto-generate Swagger page.
+ * Plugin for [elysia](https://github.com/elysiajs/elysia) that auto-generate OpenAPI documentation page.
  *
  * @see https://github.com/elysiajs/elysia-swagger
  */
 export const openapi = <
+	const Enabled extends boolean = true,
 	const Path extends string = '/openapi',
 	const Provider extends OpenAPIProvider = 'scalar'
 >({
-	provider = 'scalar',
+	enabled = true as Enabled,
 	path = '/openapi' as Path,
+	provider = 'scalar' as Provider,
 	specPath = `${path}/json`,
 	documentation = {},
 	exclude,
 	swagger,
 	scalar
-}: ElysiaOpenAPIConfig<Path, Provider> = {}) => {
-	const {
-		version: swaggerVersion = '5.9.0',
-		theme: swaggerTheme = `https://unpkg.com/swagger-ui-dist@${swaggerVersion}/swagger-ui.css`,
-		autoDarkMode = true,
-		...swaggerOptions
-	} = swagger ?? {}
-
-	const {
-		version: scalarVersion = 'latest',
-		cdn: scalarCDN = '',
-		...scalarConfig
-	} = scalar ?? {}
+}: ElysiaOpenAPIConfig<Enabled, Path, Provider> = {}) => {
+	if (!enabled) return new Elysia({ name: '@elysiajs/openapi' })
 
 	const info = {
 		title: 'Elysia Documentation',
@@ -51,7 +42,7 @@ export const openapi = <
 	let totalRoutes = 0
 	let cachedSchema: OpenAPIV3.Document | undefined
 
-	const app = new Elysia({ name: '@elysiajs/swagger' })
+	const app = new Elysia({ name: '@elysiajs/openapi' })
 		.use((app) => {
 			if (provider === null) return app
 
@@ -59,38 +50,20 @@ export const openapi = <
 				path,
 				new Response(
 					provider === 'swagger-ui'
-						? SwaggerUIRender(
-								info,
-								swaggerVersion,
-								swaggerTheme,
-								JSON.stringify(
-									{
-										url: relativePath,
-										dom_id: '#swagger-ui',
-										...swaggerOptions
-									},
-									(_, value) =>
-										typeof value === 'function'
-											? undefined
-											: value
-								),
-								autoDarkMode
-							)
-						: ScalarRender(
-								info,
-								scalarVersion,
-								{
-									spec: {
-										url: relativePath,
-										...scalarConfig.spec
-									},
-									...scalarConfig,
-									// so we can showcase the elysia theme
-									// @ts-expect-error
-									_integration: 'elysiajs'
-								} satisfies ReferenceConfiguration,
-								scalarCDN
-							),
+						? SwaggerUIRender(info, {
+								url: relativePath,
+								dom_id: '#swagger-ui',
+								version: 'latest',
+								autoDarkMode: true,
+								...swagger
+							})
+						: ScalarRender(info, {
+								url: relativePath,
+								version: 'latest',
+								cdn: `https://cdn.jsdelivr.net/npm/@scalar/api-reference@${scalar?.version ?? 'latest'}/dist/browser/standalone.min.js`,
+								...(scalar as ApiReferenceConfiguration),
+								_integration: 'elysiajs'
+							}),
 					{
 						headers: {
 							'content-type': 'text/html; charset=utf8'
@@ -155,4 +128,5 @@ export const openapi = <
 
 export { toOpenAPISchema, withHeaders } from './openapi'
 export type { ElysiaOpenAPIConfig }
+
 export default openapi

@@ -2,6 +2,8 @@
 Feature:
 - add `withHeader` for adding custom headers to response schema
 - spread all possible path for optional params
+- provider can be `null` to disable provider
+- export `toOpenAPI` to generate spec programmatically
 
 Breaking change:
 - rename `@elysiajs/swagger` to `@elysiajs/openapi`

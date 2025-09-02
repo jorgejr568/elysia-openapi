@@ -61,7 +61,7 @@ const app = new Elysia()
 						description: 'Void response'
 					}),
 					{
-						'X-Custom-Header': t.String()
+						'X-Custom-Header': t.Literal('Elysia')
 					}
 				)
 			}
