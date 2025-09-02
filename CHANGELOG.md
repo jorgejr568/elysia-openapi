@@ -1,3 +1,7 @@
+# 1.3.7
+Improvement:
+- type generator: clean up temp files after generation
+
 # 1.3.6 - 3 Sep 2025
 Improvement:
 - type generator: add loose path type matching

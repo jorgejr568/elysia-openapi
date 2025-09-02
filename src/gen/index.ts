@@ -217,5 +217,7 @@ export const fromTypes =
 			console.warn(error)
 
 			return
+		} finally {
+			rmSync(tmpRoot, { recursive: true, force: true })
 		}
 	}
