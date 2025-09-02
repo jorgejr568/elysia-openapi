@@ -1,9 +1,10 @@
-# 1.3.2 - 22 Aug 2025
+# 1.3.2 - 2 Sep 2025
 Feature:
 - add `withHeader` for adding custom headers to response schema
 - spread all possible path for optional params
 - provider can be `null` to disable provider
 - export `toOpenAPI` to generate spec programmatically
+- add `openapi/gen` to automatically generate OpenAPI spec from types
 
 Breaking change:
 - rename `@elysiajs/swagger` to `@elysiajs/openapi`
