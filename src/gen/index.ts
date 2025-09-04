@@ -147,16 +147,35 @@ export const fromTypes =
 				.replace(/.tsx$/, '.ts')
 				.replace(/.ts$/, '.d.ts')
 
-			const targetFile =
+			let targetFile =
 				(overrideOutputPath
 					? typeof overrideOutputPath === 'string'
 						? overrideOutputPath.startsWith('/')
 							? overrideOutputPath
 							: join(tmpRoot, 'dist', overrideOutputPath)
 						: overrideOutputPath(tmpRoot)
-					: undefined) ?? join(tmpRoot, 'dist', fileName)
+					: undefined) ??
+				join(
+					tmpRoot,
+					'dist',
+					// remove leading like src or something similar
+					fileName.slice(fileName.indexOf('/') + 1)
+				)
 
-			if (!existsSync(targetFile)) {
+			let existed = existsSync(targetFile)
+
+			if (!existed && overrideOutputPath) {
+				targetFile = join(
+					tmpRoot,
+					'dist',
+					// use original file name as-is eg. in monorepo
+					fileName
+				)
+
+				existed = existsSync(targetFile)
+			}
+
+			if (!existed) {
 				rmSync(join(tmpRoot, 'tsconfig.json'))
 
 				console.warn(

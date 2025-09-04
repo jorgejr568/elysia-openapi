@@ -1,3 +1,7 @@
+# 1.3.9 - 4 Sep 2025
+Bug fix:
+- type generator: loose path generated file mapping
+
 # 1.3.8 - 4 Sep 2025
 Bug fix:
 - type generator: if failed, do not generate empty JSON
