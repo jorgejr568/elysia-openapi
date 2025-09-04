@@ -2,6 +2,7 @@
 Bug fix:
 - type generator: if failed, do not generate empty JSON
 - type generator: friendly error message, and better error handling
+- type generator: overrideOutputPath can be string
 
 # 1.3.7 - 3 Sep 2025
 Improvement:

@@ -5,7 +5,11 @@ import { fromTypes } from '../src/gen'
 export const app = new Elysia()
 	.use(
 		openapi({
-			references: fromTypes('example/gen3.ts')
+			references: fromTypes('gen.ts', {
+				projectRoot: import.meta.dirname,
+				overrideOutputPath: 'example/gen.d.ts'
+				// debug: true
+			})
 		})
 	)
 	.get(

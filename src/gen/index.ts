@@ -147,7 +147,7 @@ export const fromTypes =
 				.replace(/.tsx$/, '.ts')
 				.replace(/.ts$/, '.d.ts')
 
-			let targetFile =
+			const targetFile =
 				(overrideOutputPath
 					? typeof overrideOutputPath === 'string'
 						? overrideOutputPath.startsWith('/')
@@ -156,41 +156,31 @@ export const fromTypes =
 						: overrideOutputPath(tmpRoot)
 					: undefined) ?? join(tmpRoot, 'dist', fileName)
 
-			{
-				const _targetFile = join(
-					tmpRoot,
-					'dist',
-					fileName.slice(fileName.indexOf('/') + 1)
+			if (!existsSync(targetFile)) {
+				rmSync(join(tmpRoot, 'tsconfig.json'))
+
+				console.warn(
+					'[@elysiajs/openapi/gen] Failed to generate OpenAPI schema'
 				)
+				console.warn("Couldn't find generated declaration file")
 
-				if (!existsSync(_targetFile)) {
-					rmSync(join(tmpRoot, 'tsconfig.json'))
+				if (existsSync(join(tmpRoot, 'dist'))) {
+					const tempFiles = readdirSync(join(tmpRoot, 'dist'), {
+						recursive: true
+					})
+						.filter((x) => x.toString().endsWith('.d.ts'))
+						.map((x) => `- ${x}`)
+						.join('\n')
 
-					console.warn(
-						'[@elysiajs/openapi/gen] Failed to generate OpenAPI schema'
-					)
-					console.warn("Couldn't find generated declaration file")
-
-					if (existsSync(join(tmpRoot, 'dist'))) {
-						const tempFiles = readdirSync(join(tmpRoot, 'dist'), {
-							recursive: true
-						})
-							.filter((x) => x.toString().endsWith('.d.ts'))
-							.map((x) => `- ${x}`)
-							.join('\n')
-
-						if (tempFiles) {
-							console.warn(
-								'You can override with `overrideOutputPath` with one of the following:'
-							)
-							console.warn(tempFiles)
-						}
+					if (tempFiles) {
+						console.warn(
+							'You can override with `overrideOutputPath` with one of the following:'
+						)
+						console.warn(tempFiles)
 					}
-
-					return
 				}
 
-				targetFile = _targetFile
+				return
 			}
 
 			const declaration = readFileSync(targetFile, 'utf8')
