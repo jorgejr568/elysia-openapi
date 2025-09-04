@@ -105,101 +105,108 @@ export const fromTypes =
 					`Couldn't find "${targetFilePath}" from ${projectRoot}`
 				)
 
-			if (existsSync(tmpRoot))
-				rmSync(tmpRoot, { recursive: true, force: true })
+			let targetFile: string
 
-			mkdirSync(tmpRoot, { recursive: true })
+			// Since it's already a declaration file
+			// We can just read it directly
+			if (targetFilePath.endsWith('.d.ts')) targetFile = targetFilePath
+			else {
+				if (existsSync(tmpRoot))
+					rmSync(tmpRoot, { recursive: true, force: true })
 
-			const tsconfig = tsconfigPath.startsWith('/')
-				? tsconfigPath
-				: join(projectRoot, tsconfigPath)
+				mkdirSync(tmpRoot, { recursive: true })
 
-			const extendsRef = existsSync(tsconfig)
-				? `"extends": "${join(projectRoot, 'tsconfig.json')}",`
-				: ''
+				const tsconfig = tsconfigPath.startsWith('/')
+					? tsconfigPath
+					: join(projectRoot, tsconfigPath)
 
-			writeFileSync(
-				join(tmpRoot, 'tsconfig.json'),
-				`{
-			${extendsRef}
-			"compilerOptions": {
-				"lib": ["ESNext"],
-				"module": "ESNext",
-				"noEmit": false,
-				"declaration": true,
-				"emitDeclarationOnly": true,
-				"moduleResolution": "bundler",
-				"skipLibCheck": true,
-				"skipDefaultLibCheck": true,
-				"outDir": "./dist"
-			},
-			"include": ["${src}"]
-		}`
-			)
+				const extendsRef = existsSync(tsconfig)
+					? `"extends": "${join(projectRoot, 'tsconfig.json')}",`
+					: ''
 
-			spawnSync(`tsc`, {
-				shell: true,
-				cwd: tmpRoot,
-				stdio: debug ? 'inherit' : undefined
-			})
-
-			const fileName = targetFilePath
-				.replace(/.tsx$/, '.ts')
-				.replace(/.ts$/, '.d.ts')
-
-			let targetFile =
-				(overrideOutputPath
-					? typeof overrideOutputPath === 'string'
-						? overrideOutputPath.startsWith('/')
-							? overrideOutputPath
-							: join(tmpRoot, 'dist', overrideOutputPath)
-						: overrideOutputPath(tmpRoot)
-					: undefined) ??
-				join(
-					tmpRoot,
-					'dist',
-					// remove leading like src or something similar
-					fileName.slice(fileName.indexOf('/') + 1)
+				writeFileSync(
+					join(tmpRoot, 'tsconfig.json'),
+					`{
+	${extendsRef}
+	"compilerOptions": {
+		"lib": ["ESNext"],
+		"module": "ESNext",
+		"noEmit": false,
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"moduleResolution": "bundler",
+		"skipLibCheck": true,
+		"skipDefaultLibCheck": true,
+		"outDir": "./dist"
+	},
+	"include": ["${src}"]
+}`
 				)
 
-			let existed = existsSync(targetFile)
+				spawnSync(`tsc`, {
+					shell: true,
+					cwd: tmpRoot,
+					stdio: debug ? 'inherit' : undefined
+				})
 
-			if (!existed && overrideOutputPath) {
-				targetFile = join(
-					tmpRoot,
-					'dist',
-					// use original file name as-is eg. in monorepo
-					fileName
-				)
+				const fileName = targetFilePath
+					.replace(/.tsx$/, '.ts')
+					.replace(/.ts$/, '.d.ts')
 
-				existed = existsSync(targetFile)
-			}
+				targetFile =
+					(overrideOutputPath
+						? typeof overrideOutputPath === 'string'
+							? overrideOutputPath.startsWith('/')
+								? overrideOutputPath
+								: join(tmpRoot, 'dist', overrideOutputPath)
+							: overrideOutputPath(tmpRoot)
+						: undefined) ??
+					join(
+						tmpRoot,
+						'dist',
+						// remove leading like src or something similar
+						fileName.slice(fileName.indexOf('/') + 1)
+					)
 
-			if (!existed) {
-				rmSync(join(tmpRoot, 'tsconfig.json'))
+				let existed = existsSync(targetFile)
 
-				console.warn(
-					'[@elysiajs/openapi/gen] Failed to generate OpenAPI schema'
-				)
-				console.warn("Couldn't find generated declaration file")
+				if (!existed && !overrideOutputPath) {
+					targetFile = join(
+						tmpRoot,
+						'dist',
+						// use original file name as-is eg. in monorepo
+						fileName
+					)
 
-				if (existsSync(join(tmpRoot, 'dist'))) {
-					const tempFiles = readdirSync(join(tmpRoot, 'dist'), {
-						recursive: true
-					})
-						.filter((x) => x.toString().endsWith('.d.ts'))
-						.map((x) => `- ${x}`)
-						.join('\n')
-
-					if (tempFiles) {
-						console.warn(
-							'You can override with `overrideOutputPath` with one of the following:'
-						)
-						console.warn(tempFiles)
-					}
+					existed = existsSync(targetFile)
 				}
 
-				return
+				if (!existed) {
+					rmSync(join(tmpRoot, 'tsconfig.json'))
+
+					console.warn(
+						'[@elysiajs/openapi/gen] Failed to generate OpenAPI schema'
+					)
+					console.warn("Couldn't find generated declaration file")
+
+					if (existsSync(join(tmpRoot, 'dist'))) {
+						const tempFiles = readdirSync(join(tmpRoot, 'dist'), {
+							recursive: true
+						})
+							.filter((x) => x.toString().endsWith('.d.ts'))
+							.map((x) => `- ${x}`)
+							.join('\n')
+
+						if (tempFiles) {
+							console.warn(
+								'You can override with `overrideOutputPath` with one of the following:'
+							)
+							console.warn(tempFiles)
+						}
+					}
+
+					return
+				}
 			}
 
 			const declaration = readFileSync(targetFile, 'utf8')

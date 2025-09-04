@@ -1,3 +1,10 @@
+# 1.3.10 - 5 Sep 2025
+Feature:
+- type generator: accept `.d.ts` to prevent type generation in production
+
+Bug fix:
+- type generator: loose path generated file mapping
+
 # 1.3.9 - 4 Sep 2025
 Bug fix:
 - type generator: loose path generated file mapping
