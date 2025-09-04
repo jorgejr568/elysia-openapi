@@ -122,6 +122,8 @@ export function toOpenAPISchema(
 
 		if (references)
 			for (const reference of references as AdditionalReference[]) {
+				if(!reference) continue
+
 				const refer =
 					reference[route.path]?.[method] ??
 					reference[getLoosePath(route.path)]?.[method]

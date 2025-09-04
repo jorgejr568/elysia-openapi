@@ -6,7 +6,8 @@ import {
 	rmSync,
 	existsSync,
 	cpSync,
-	exists
+	exists,
+	readdirSync
 } from 'fs'
 import { TypeBox } from '@sinclair/typemap'
 
@@ -15,17 +16,11 @@ import { join } from 'path'
 import { spawnSync } from 'child_process'
 import { AdditionalReference, AdditionalReferences } from '../types'
 import { Kind, TObject } from '@sinclair/typebox/type'
+import { readdir } from 'fs/promises'
 
 const matchRoute = /: Elysia<(.*)>/gs
 const matchStatus = /(\d{3}):/g
 const wrapStatusInQuote = (value: string) => value.replace(matchStatus, '"$1":')
-
-const exec = (command: string, cwd: string) =>
-	spawnSync(command, {
-		shell: true,
-		cwd,
-		stdio: 'inherit'
-	})
 
 interface OpenAPIGeneratorOptions {
 	/**
@@ -55,7 +50,14 @@ interface OpenAPIGeneratorOptions {
 	 * Under any circumstance, that Elysia failed to find a correct schema,
 	 * Put your own schema in this path
 	 */
-	overrideOutputPath?(tempDir: string): string
+	overrideOutputPath?: string | ((tempDir: string) => string)
+
+	/**
+	 * don't remove temporary files
+	 * for debugging purpose
+	 * @default false
+	 */
+	debug?: boolean
 }
 
 /**
@@ -77,29 +79,48 @@ export const fromTypes =
 			tsconfigPath = 'tsconfig.json',
 			instanceName,
 			projectRoot = process.cwd(),
-			overrideOutputPath
+			overrideOutputPath,
+			debug = false
 		}: OpenAPIGeneratorOptions = {}
 	) =>
 	() => {
-		if (!targetFilePath.endsWith('.ts') && !targetFilePath.endsWith('.tsx'))
-			throw new Error('Only .ts files are supported')
-
 		const tmpRoot = join(tmpdir(), '.ElysiaAutoOpenAPI')
 
-		if (existsSync(tmpRoot))
-			rmSync(tmpRoot, { recursive: true, force: true })
-		mkdirSync(tmpRoot, { recursive: true })
+		try {
+			if (
+				!targetFilePath.endsWith('.ts') &&
+				!targetFilePath.endsWith('.tsx')
+			)
+				throw new Error('Only .ts files are supported')
 
-		const extendsRef = existsSync(join(projectRoot, 'tsconfig.json'))
-			? `"extends": "${join(projectRoot, 'tsconfig.json')}",`
-			: ''
+			if (targetFilePath.startsWith('./'))
+				targetFilePath = targetFilePath.slice(2)
 
-		if (!join(projectRoot, targetFilePath))
-			throw new Error('Target file does not exist')
+			const src = targetFilePath.startsWith('/')
+				? targetFilePath
+				: join(projectRoot, targetFilePath)
 
-		writeFileSync(
-			join(tmpRoot, tsconfigPath),
-			`{
+			if (!existsSync(src))
+				throw new Error(
+					`Couldn't find "${targetFilePath}" from ${projectRoot}`
+				)
+
+			if (existsSync(tmpRoot))
+				rmSync(tmpRoot, { recursive: true, force: true })
+
+			mkdirSync(tmpRoot, { recursive: true })
+
+			const tsconfig = tsconfigPath.startsWith('/')
+				? tsconfigPath
+				: join(projectRoot, tsconfigPath)
+
+			const extendsRef = existsSync(tsconfig)
+				? `"extends": "${join(projectRoot, 'tsconfig.json')}",`
+				: ''
+
+			writeFileSync(
+				join(tmpRoot, 'tsconfig.json'),
+				`{
 			${extendsRef}
 			"compilerOptions": {
 				"lib": ["ESNext"],
@@ -112,19 +133,28 @@ export const fromTypes =
 				"skipDefaultLibCheck": true,
 				"outDir": "./dist"
 			},
-			"include": ["${join(projectRoot, targetFilePath)}"]
+			"include": ["${src}"]
 		}`
-		)
+			)
 
-		exec(`tsc`, tmpRoot)
+			spawnSync(`tsc`, {
+				shell: true,
+				cwd: tmpRoot,
+				stdio: debug ? 'inherit' : undefined
+			})
 
-		try {
 			const fileName = targetFilePath
 				.replace(/.tsx$/, '.ts')
 				.replace(/.ts$/, '.d.ts')
 
 			let targetFile =
-				overrideOutputPath?.(tmpRoot) ?? join(tmpRoot, 'dist', fileName)
+				(overrideOutputPath
+					? typeof overrideOutputPath === 'string'
+						? overrideOutputPath.startsWith('/')
+							? overrideOutputPath
+							: join(tmpRoot, 'dist', overrideOutputPath)
+						: overrideOutputPath(tmpRoot)
+					: undefined) ?? join(tmpRoot, 'dist', fileName)
 
 			{
 				const _targetFile = join(
@@ -133,7 +163,34 @@ export const fromTypes =
 					fileName.slice(fileName.indexOf('/') + 1)
 				)
 
-				if (existsSync(_targetFile)) targetFile = _targetFile
+				if (!existsSync(_targetFile)) {
+					rmSync(join(tmpRoot, 'tsconfig.json'))
+
+					console.warn(
+						'[@elysiajs/openapi/gen] Failed to generate OpenAPI schema'
+					)
+					console.warn("Couldn't find generated declaration file")
+
+					if (existsSync(join(tmpRoot, 'dist'))) {
+						const tempFiles = readdirSync(join(tmpRoot, 'dist'), {
+							recursive: true
+						})
+							.filter((x) => x.toString().endsWith('.d.ts'))
+							.map((x) => `- ${x}`)
+							.join('\n')
+
+						if (tempFiles) {
+							console.warn(
+								'You can override with `overrideOutputPath` with one of the following:'
+							)
+							console.warn(tempFiles)
+						}
+					}
+
+					return
+				}
+
+				targetFile = _targetFile
 			}
 
 			const declaration = readFileSync(targetFile, 'utf8')
@@ -219,6 +276,7 @@ export const fromTypes =
 
 			return
 		} finally {
-			rmSync(tmpRoot, { recursive: true, force: true })
+			if (!debug && existsSync(tmpRoot))
+				rmSync(tmpRoot, { recursive: true, force: true })
 		}
 	}

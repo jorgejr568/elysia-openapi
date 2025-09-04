@@ -1,3 +1,8 @@
+# 1.3.8 - 4 Sep 2025
+Bug fix:
+- type generator: if failed, do not generate empty JSON
+- type generator: friendly error message, and better error handling
+
 # 1.3.7 - 3 Sep 2025
 Improvement:
 - type generator: clean up temp files after generation
