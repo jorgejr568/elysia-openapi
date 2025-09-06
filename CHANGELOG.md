@@ -1,3 +1,7 @@
+# 1.3.11 - 9 Sep 2025
+Bug fix:
+- type generator: convert Windows path to Unix for TypeScript CLI
+
 # 1.3.10 - 5 Sep 2025
 Feature:
 - type generator: accept `.d.ts` to prevent type generation in production
