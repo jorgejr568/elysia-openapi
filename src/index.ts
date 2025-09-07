@@ -56,7 +56,7 @@ export const openapi = <
 		return specPath
 	}
 	
-	const relativePath = getSpecUrl()
+	const specUrl = getSpecUrl()
 
 	let totalRoutes = 0
 	let cachedSchema: OpenAPIV3.Document | undefined
@@ -70,14 +70,14 @@ export const openapi = <
 				new Response(
 					provider === 'swagger-ui'
 						? SwaggerUIRender(info, {
-								url: relativePath,
+								url: specUrl,
 								dom_id: '#swagger-ui',
 								version: 'latest',
 								autoDarkMode: true,
 								...swagger
 							})
 						: ScalarRender(info, {
-								url: relativePath,
+								url: specUrl,
 								version: 'latest',
 								cdn: `https://cdn.jsdelivr.net/npm/@scalar/api-reference@${scalar?.version ?? 'latest'}/dist/browser/standalone.min.js`,
 								...(scalar as ApiReferenceConfiguration),
